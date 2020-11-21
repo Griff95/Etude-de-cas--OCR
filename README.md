@@ -1,1 +1,1 @@
-# Etude-de-cas---OCR
+# Etude-de-cas--OCR

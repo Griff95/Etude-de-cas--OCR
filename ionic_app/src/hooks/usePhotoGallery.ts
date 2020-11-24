@@ -4,6 +4,8 @@ import { useFilesystem, base64FromPath } from '@ionic/react-hooks/filesystem';
 import { useStorage } from '@ionic/react-hooks/storage';
 import { isPlatform } from '@ionic/react';
 import { CameraResultType, CameraSource, CameraPhoto, Capacitor, FilesystemDirectory } from "@capacitor/core";
+import axios from 'axios';
+
 
 const PHOTO_STORAGE = "photos";
 
@@ -44,11 +46,8 @@ export function usePhotoGallery() {
     const savedFileImage = await savePicture(cameraPhoto, fileName);
     const newPhotos = [savedFileImage, ...photos];
     setPhotos(newPhotos);
+    console.log('Photo saved');
     set(PHOTO_STORAGE, JSON.stringify(newPhotos));
-  };
-
-  const sendPhoto = async () => {
-    console.log("sendImg not implemented");
   };
 
   const savePicture = async (photo: CameraPhoto, fileName: string): Promise<Photo> => {
@@ -85,7 +84,16 @@ export function usePhotoGallery() {
       };
     }
   };
-
+  
+  const ocrPhoto = async (photo: Photo) => {
+    let resp= await 
+    axios.post("http://localhost:5000/post",{
+      data: photo.webviewPath
+    })
+    return resp.data.txt_read
+  };
+  
+  
   const deletePhoto = async (photo: Photo) => {
     // Remove this photo from the Photos reference data array
     const newPhotos = photos.filter(p => p.filepath !== photo.filepath);
@@ -101,14 +109,18 @@ export function usePhotoGallery() {
     });
     setPhotos(newPhotos);
   };
+  
 
   return {
     deletePhoto,
     photos,
     takePhoto,
-    sendPhoto
+    ocrPhoto
   };
 }
+
+// Use webPath to display the new image instead of base64 since it's
+// already loaded into memory
 
 export interface Photo {
   filepath: string;

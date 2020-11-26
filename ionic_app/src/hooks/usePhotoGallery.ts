@@ -16,23 +16,24 @@ export function usePhotoGallery() {
   const { deleteFile, readFile, writeFile } = useFilesystem();
   const { get, set } = useStorage();
 
-  useEffect(() => {
-    const loadSaved = async () => {
-      const photosString = await get(PHOTO_STORAGE);
-      const photosInStorage = (photosString ? JSON.parse(photosString) : []) as Photo[];
-      // If running on the web...
-      if (!isPlatform('hybrid')) {
-        for (let photo of photosInStorage) {
-          const file = await readFile({
-            path: photo.filepath,
-            directory: FilesystemDirectory.Data
-          });
-          // Web platform only: Load the photo as base64 data
-          photo.webviewPath = `data:image/jpeg;base64,${file.data}`;
-        }
+  const loadSaved = async () => {
+    const photosString = await get(PHOTO_STORAGE);
+    const photosInStorage = (photosString ? JSON.parse(photosString) : []) as Photo[];
+    // If running on the web...
+    if (!isPlatform('hybrid')) {
+      for (let photo of photosInStorage) {
+        const file = await readFile({
+          path: photo.filepath,
+          directory: FilesystemDirectory.Data
+        });
+        // Web platform only: Load the photo as base64 data
+        photo.webviewPath = `data:image/jpeg;base64,${file.data}`;
       }
-      setPhotos(photosInStorage);
-    };
+    }
+    setPhotos(photosInStorage);
+  };
+
+  useEffect(() => {
     loadSaved();
   }, [get, readFile]);
 
@@ -48,6 +49,7 @@ export function usePhotoGallery() {
     setPhotos(newPhotos);
     console.log('Photo saved');
     set(PHOTO_STORAGE, JSON.stringify(newPhotos));
+    loadSaved();
   };
 
   const savePicture = async (photo: CameraPhoto, fileName: string): Promise<Photo> => {
@@ -113,8 +115,7 @@ export function usePhotoGallery() {
   return {
     deletePhoto,
     photos,
-    takePhoto,
-    //ocrPhoto
+    takePhoto
   };
 }
 

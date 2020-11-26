@@ -5,34 +5,20 @@ import { camera, trash, close, triangle } from 'ionicons/icons';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import {IonModal, IonButton,IonAlert} from '@ionic/react';
 import axios from 'axios';
-import ReactDOM from 'react-dom';
-import { Redirect, Route } from 'react-router-dom';
-
-
-type MyModalProps={
-  msg:string
-}
-
-
-
-
 
 
 
 const Tab2: React.FC = () => {
-  const { deletePhoto, photos, takePhoto } = usePhotoGallery();
+  const { deletePhoto, photos, takePhoto} = usePhotoGallery();
   const [photoToDelete, setPhotoToDelete] = useState<Photo>();
   const [showAlert, setShowAlert] = useState(false);
   const [msgTo, setMsgTo] = useState("nope");
-
-  
-
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Photo Gallery</IonTitle>
+          <IonTitle>Which one should I read?</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -42,43 +28,54 @@ const Tab2: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonAlert
-      isOpen={showAlert}
-      onDidDismiss={() => setShowAlert(false)}
-      cssClass='my-custom-class'
-      header={'I read:'}    
-      message={msgTo}
-      buttons={['Wow']}
-      />
+          isOpen={showAlert}
+          onDidDismiss={() => setShowAlert(false)}
+          cssClass='my-custom-class'
+          header={'I can read:'}
+          subHeader={''}    
+          message={msgTo}
+          buttons={['Wow!']}
+        />
 
         <IonGrid>
           <IonRow>
             {photos.map((photo, index) => (
               <IonCol size="6" key={index}>
-                <IonImg onClick={() => setPhotoToDelete(photo)} src={photo.webviewPath} />
+                <IonImg onClick={() => setPhotoToDelete(photo)} 
+                                src={photo.webviewPath} />
               </IonCol>
             ))}
           </IonRow>
         </IonGrid>
         <IonFab vertical="bottom" horizontal="center" slot="fixed">
-          <IonFabButton onClick={() => takePhoto()}>
+          <IonFabButton onClick={() => {takePhoto()}}>
             <IonIcon icon={camera}></IonIcon>
           </IonFabButton>
         </IonFab>
-
+                
         <IonActionSheet
           isOpen={!!photoToDelete}
           buttons={[
-            
+           
             {
-              text: 'OCR',
+              text: 'OCR THIS!',
               role: 'destructive',
               icon: triangle,
               handler: () => {
+                
                 if (photoToDelete) {  
                   axios.post("http://localhost:5000/post",{
                     data: photoToDelete.webviewPath
-                  }).then(resp => {setMsgTo(resp.data.txt_read.replace(/[^0-9a-z ]/gi, ''));  setShowAlert(true) });
-                    }                                         
+                  })
+                  .then(resp => {
+                    console.log('"'+resp.data.txt_read+'"');
+                    if (!resp.data.txt_read.replace(/[^0-9a-z]/gi, '')) {setMsgTo('...nothing');}
+                    else {
+                      setMsgTo(resp.data.txt_read.replace(/[^0-9a-z ]/gi, ''));
+                    }  
+                    setShowAlert(true) 
+                  });
+                  }                                         
                   setPhotoToDelete(undefined); 
                 }
               },           

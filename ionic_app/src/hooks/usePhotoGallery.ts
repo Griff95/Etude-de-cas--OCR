@@ -4,7 +4,7 @@ import { useFilesystem, base64FromPath } from '@ionic/react-hooks/filesystem';
 import { useStorage } from '@ionic/react-hooks/storage';
 import { isPlatform } from '@ionic/react';
 import { CameraResultType, CameraSource, CameraPhoto, Capacitor, FilesystemDirectory } from "@capacitor/core";
-import axios from 'axios';
+
 
 
 const PHOTO_STORAGE = "photos";
@@ -85,14 +85,13 @@ export function usePhotoGallery() {
     }
   };
   
+  /*
   const ocrPhoto = async (photo: Photo) => {
-    let resp= await 
-    axios.post("http://localhost:5000/post",{
+    return await axios.post("http://localhost:5000/post",{
       data: photo.webviewPath
-    })
-    return resp.data.txt_read
+    }).then(resp => resp.data.txt_read)
   };
-  
+  */
   
   const deletePhoto = async (photo: Photo) => {
     // Remove this photo from the Photos reference data array
@@ -115,7 +114,7 @@ export function usePhotoGallery() {
     deletePhoto,
     photos,
     takePhoto,
-    ocrPhoto
+    //ocrPhoto
   };
 }
 

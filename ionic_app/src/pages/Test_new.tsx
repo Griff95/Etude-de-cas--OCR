@@ -1,20 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonFab, 
   IonFabButton, IonIcon, IonGrid, IonRow, IonCol, IonImg, IonActionSheet } from '@ionic/react';
 import { camera, trash, close, triangle } from 'ionicons/icons';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
 import {IonModal, IonButton,IonAlert} from '@ionic/react';
 import axios from 'axios';
-import ReactDOM from 'react-dom';
-import { Redirect, Route } from 'react-router-dom';
-
-
-type MyModalProps={
-  msg:string
-}
-
-
-
 
 
 
@@ -23,9 +13,17 @@ const Tab2: React.FC = () => {
   const { deletePhoto, photos, takePhoto } = usePhotoGallery();
   const [photoToDelete, setPhotoToDelete] = useState<Photo>();
   const [showAlert, setShowAlert] = useState(false);
-  const [msgTo, setMsgTo] = useState("nope");
+  const [showModal, setShowModal] = useState(false);
+  const [ocrMsg, setOcrMsg] = useState('');
+
 
   
+  
+  const ocrPhoto = async (photo: Photo) => {
+    return await axios.post("http://localhost:5000/post",{
+      data: photo.webviewPath
+    }).then(resp => resp.data.txt_read)
+  };
 
 
   return (
@@ -42,14 +40,18 @@ const Tab2: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonAlert
-      isOpen={showAlert}
-      onDidDismiss={() => setShowAlert(false)}
-      cssClass='my-custom-class'
-      header={'I read:'}    
-      message={msgTo}
-      buttons={['Wow']}
-      />
-
+          isOpen={showAlert}
+          onDidDismiss={() => setShowAlert(false)}
+          cssClass='my-custom-class'
+          header={'Alert'}
+          subHeader={'Subtitle'}
+          message={ocrMsg}
+          buttons={['OK']}
+        />
+        <IonModal 
+        isOpen={showModal} cssClass='my-custom-class'>
+        <p>This is modal content</p>
+      </IonModal>
         <IonGrid>
           <IonRow>
             {photos.map((photo, index) => (
@@ -68,20 +70,31 @@ const Tab2: React.FC = () => {
         <IonActionSheet
           isOpen={!!photoToDelete}
           buttons={[
-            
             {
-              text: 'OCR',
+              text: 'Modal',
               role: 'destructive',
               icon: triangle,
               handler: () => {
-                if (photoToDelete) {  
-                  axios.post("http://localhost:5000/post",{
-                    data: photoToDelete.webviewPath
-                  }).then(resp => {setMsgTo(resp.data.txt_read.replace(/[^0-9a-z ]/gi, ''));  setShowAlert(true) });
-                    }                                         
+                
+                if (photoToDelete) {                  
+                  ocrPhoto(photoToDelete);             
+                  setShowModal(true);
                   setPhotoToDelete(undefined); 
                 }
-              },           
+              }
+            },
+            {
+              text: 'alert',
+              role: 'destructive',
+              icon: triangle,
+              handler: () => {
+                if (photoToDelete) {                  
+                  ocrPhoto(photoToDelete);             
+                  setShowAlert(true);
+                  setPhotoToDelete(undefined); 
+                }
+              }
+            },
             {
               text: 'Cancel',
               icon: close,

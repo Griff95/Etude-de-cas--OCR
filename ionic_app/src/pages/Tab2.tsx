@@ -3,7 +3,7 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonFab,
   IonFabButton, IonIcon, IonGrid, IonRow, IonCol, IonImg, IonActionSheet } from '@ionic/react';
 import { camera, trash, close, triangle } from 'ionicons/icons';
 import { usePhotoGallery, Photo } from '../hooks/usePhotoGallery';
-import {IonModal, IonButton,IonAlert} from '@ionic/react';
+import {IonAlert} from '@ionic/react';
 import axios from 'axios';
 
 
@@ -52,6 +52,7 @@ const Tab2: React.FC = () => {
             <IonIcon icon={camera}></IonIcon>
           </IonFabButton>
         </IonFab>
+        
                 
         <IonActionSheet
           isOpen={!!photoToDelete}

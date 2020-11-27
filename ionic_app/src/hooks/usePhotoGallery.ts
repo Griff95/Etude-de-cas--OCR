@@ -9,12 +9,15 @@ import { CameraResultType, CameraSource, CameraPhoto, Capacitor, FilesystemDirec
 
 const PHOTO_STORAGE = "photos";
 
+
 export function usePhotoGallery() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const { getPhoto } = useCamera();
   const { deleteFile, readFile, writeFile } = useFilesystem();
   const { get, set } = useStorage();
+  
+  
 
   const loadSaved = async () => {
     const photosString = await get(PHOTO_STORAGE);
@@ -32,7 +35,6 @@ export function usePhotoGallery() {
     }
     setPhotos(photosInStorage);
   };
-
   useEffect(() => {
     loadSaved();
   }, [get, readFile]);

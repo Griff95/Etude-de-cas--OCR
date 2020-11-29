@@ -3,6 +3,9 @@ import numpy as np
 import argparse
 import cv2
 import imutils
+from sklearn.cluster import KMeans
+from itertools import combinations
+from math import sin, cos, atan
 
 
 def order_points(pts):
@@ -59,55 +62,108 @@ def four_point_transform(image, pts):
 	return warped
 
 
+def _get_intersections(img, lines):
+    """Finds the intersections between groups of lines."""
+    intersections = []
+    group_lines = combinations(range(len(lines)), 2)
+    x_in_range = lambda x: 0 <= x <= img.shape[1]
+    y_in_range = lambda y: 0 <= y <= img.shape[0]
+    for i, j in group_lines:
+      line_i, line_j = lines[i][0], lines[j][0]
+      if 80.0 < _get_angle_between_lines(line_i, line_j) < 100.0:
+          int_point = _intersection(line_i, line_j)
+          if x_in_range(int_point[0][0]) and y_in_range(int_point[0][1]):
+              intersections.append(int_point)
+    return intersections
+
+
+def _get_angle_between_lines(line_1, line_2):
+    rho1, theta1 = line_1
+    rho2, theta2 = line_2
+    # x * cos(theta) + y * sin(theta) = rho
+    # y * sin(theta) = x * (- cos(theta)) + rho
+    # y = x * (-cos(theta) / sin(theta)) + rho
+    m1 = -(np.cos(theta1) / np.sin(theta1))
+    m2 = -(np.cos(theta2) / np.sin(theta2))
+    return abs(atan(abs(m2-m1) / (1 + m2 * m1))) * (180 / np.pi)
+
+
+def _intersection(line1, line2):
+    """Finds the intersection of two lines given in Hesse normal form.
+    Returns closest integer pixel locations.
+    See https://stackoverflow.com/a/383527/5087436
+    """
+    rho1, theta1 = line1
+    rho2, theta2 = line2
+    A = np.array([
+      [np.cos(theta1), np.sin(theta1)],
+      [np.cos(theta2), np.sin(theta2)]
+    ])
+    b = np.array([[rho1], [rho2]])
+    x0, y0 = np.linalg.solve(A, b)
+    x0, y0 = int(np.round(x0)), int(np.round(y0))
+    return [[x0, y0]]
+
+def _find_quadrilaterals(intersections):
+    X = np.array([[point[0][0], point[0][1]] for point in intersections])
+    kmeans = KMeans(
+      n_clusters = 4,
+      init = 'k-means++',
+      max_iter = 100,
+      n_init = 10,
+      random_state = 0
+	  ).fit(X)
+
+    return  [[center.tolist()] for center in kmeans.cluster_centers_]
+
 
 
 def get_scan(image, show=False):
 	# load the image and compute the ratio of the old height
 	# to the new height, clone it, and resize it
-	ratio = image.shape[0] / 500.0
+	ratio = image.shape[0] / 1000.0
 	orig = image.copy()
-	resized = imutils.resize(image, height = 500)
-	# convert the image to grayscale, blur it, and find edges
-	# in the image
-	gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-	gray = cv2.GaussianBlur(gray, (5, 5), 0)
-	edged = cv2.Canny(gray, 75, 200)
-	# show the original image and the edge detected image
+	resized = imutils.resize(image, height = 1000)
+
 	print("STEP 1: Edge Detection")
+	denoise = cv2.fastNlMeansDenoising(resized, h = 7)
+	gray = cv2.cvtColor(denoise, cv2.COLOR_BGR2GRAY)
+	# gray = cv2.equalizeHist(gray)
+	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+	close = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel, iterations = 5)
+	edge = cv2.Canny(close, 75, 150, apertureSize = 3)
+	edge = cv2.copyMakeBorder(edge, 1, 1, 1, 1, cv2.BORDER_CONSTANT, None, 255)
+
+
+	print("STEP 2: Find contours of document")
+	lines = cv2.HoughLines(edge, 1, np.pi / 180, 100)
+	intersections = _get_intersections(edge, lines)
+	quad = _find_quadrilaterals(intersections)
+
+	# show the original image and the edge detected image
+
 	if show:
-		cv2.imwrite("./img_debug/1_resized.jpg", resized)
-		cv2.imwrite("./img_debug/2_edged.jpg", edged)
-	# find the contours in the edged image, keeping only the
-	# largest ones, and initialize the screen contour
-	cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	cnts = imutils.grab_contours(cnts)
-	cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
-	# loop over the contours
-	screenCnts = []
-	screenCnt = None
-	for c in cnts:
-		# approximate the contour
-		peri = cv2.arcLength(c, True)
-		approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-		# if our approximated contour has four points, then we
-		# can assume that we have found our screen
-		screenCnts.append(approx)
-		if len(approx) == 4:
-			screenCnt = approx
-			break
-	# show the contour (outline) of the piece of paper
-	print("STEP 2: Find contours of paper")
-	if show:
+		cv2.imwrite("./img_debug/1_gray.jpg", gray)
+		cv2.imwrite("./img_debug/2__close.jpg", close)
+		cv2.imwrite("./img_debug/3_edge.jpg", edge)
 		contour = resized.copy()
-		cv2.drawContours(contour, screenCnts, -1, (0, 255, 0), 2)
+		umat = np.float32(quad)
+		xSorted = sorted(umat, key = lambda x: x[0][0])
+		leftMost = xSorted[:2]
+		rightMost = xSorted[2:]
+		(tl , bl) = sorted(leftMost, key= lambda x: x[0][1])
+		(tr, br) = sorted(rightMost, key = lambda x: x[0][1])
+		print([tl, tr, br, bl])
+		umat = np.float32([tl, tr, br, bl])
+		poly = cv2.approxPolyDP(umat, 0.03 * cv2.arcLength(umat, True), True)
+		ctr = np.array(umat).reshape((-1,1,2)).astype(np.int32)
+		cv2.drawContours(contour, [ctr], -1, (0,0,255), 5)
 		cv2.imwrite("./img_debug/3_contours.jpg", contour)
-	if (screenCnt is None):
-		print("no document found")
-		return None
+
 
 	# apply the four point transform to obtain a top-down
 	# view of the original image
-	warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
+	warped = four_point_transform(orig, np.array(quad).reshape(4, 2) * ratio)
 	# convert the warped image to grayscale, then threshold it
 	# to give it that 'black and white' paper effect
 	warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
@@ -115,9 +171,10 @@ def get_scan(image, show=False):
 	warped = (warped > T).astype("uint8") * 255
 	x,y = warped.shape
 	# some padding to erase black pixels of image borders
-	warped = warped[25:x-25, 25:y-25]
-	# show the original and scanned images
+	warped = warped[75:x-75, 25:y-25]
+	warped = cv2.medianBlur(warped, 5)
 	print("STEP 3: Apply perspective transform")
 	if show:
 		cv2.imwrite("./img_debug/4_scan.jpg", warped)
+
 	return warped

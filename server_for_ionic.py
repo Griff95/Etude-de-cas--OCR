@@ -2,7 +2,7 @@ from flask import Flask, request, Response
 import jsonpickle
 import numpy as np
 import cv2
-from glob2 import glob
+import glob
 import os
 import warnings
 warnings.filterwarnings("ignore")
@@ -43,6 +43,10 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 @cross_origin()
 def post_img():
     r = request
+
+    # cleaning debug image folder
+    for f in glob.glob('./img_debug/*.jpg'):
+        os.remove(f)
     # convert string of image data to uint8
     #print(r.json['data'])
     try:
@@ -52,30 +56,34 @@ def post_img():
         imtxt=r.json['data']
         print("couldn't split")
 
+
     # convert to openCV image
     # image_64 = io.BytesIO(base64.b64decode(imtxt))
     # print(type(image_64))
     # test = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
-    document = cv2.imread('./Document.jpg', cv2.IMREAD_COLOR)
+    document = cv2.imread('./daniel1.jpg', cv2.IMREAD_COLOR)
+    save_img_step = True
     # get document scan (binary, transformed)
-    scan = scanner.get_scan(document)
+    scan = scanner.get_scan(document, save_img_step)
     if scan is None:
         return Response(response=jsonpickle.encode({"txt_read":"aucun document détecté"}), status=200, mimetype="application/json")
     # get spatialy sorted list of paragraph images
-    text_regions = text_detection.get_text_regions(scan)
+    text_regions = text_detection.get_text_regions(scan, save_img_step)
     if text_regions == []:
         return Response(response=jsonpickle.encode({"txt_read":"aucune région de texte détectée"}), status=200, mimetype="application/json")
     print("text_regions :" +str(len(text_regions)))
-    text_lines = list(map(lambda x: text_detection.get_lines(x), text_regions))
-    text_words = list(map(lambda x: list(map(lambda y: text_detection.get_words(y), x)), text_lines))
-    model = prediction.get_model()
+    text_lines = list(map(lambda x: text_detection.get_lines(x, save_img_step), text_regions))
+    text_words = list(map(lambda x: list(map(lambda y: text_detection.get_words(y, save_img_step), x)), text_lines))
+    # modelHTR_augmented_79epochs.h5
+    # model10.h5
+    # model5_11.h5
+    model = prediction.get_model("modelHTR_augmented_79epochs.h5", "CRNN_architecture.json")
     predictions = list(map(lambda paragraph: list(map(lambda line: " ".join(prediction.predict_words(line, model)), paragraph)), text_words))
     predictions = list(map(lambda paragraph: "\n".join(paragraph), predictions))
     predictions = "\n\n".join(predictions)
 
     print('number of text regions:', len(text_words))
     print('number of text lines:', *list(len(i) for i in text_words))
-    print('number of words in 1st line of 1st paragraph:', len(text_words[0][0]))
     print()
     print(predictions)
 

@@ -6,6 +6,9 @@ import pandas as pd
 
 import tensorflow as tf
 import keras
+import logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
+logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 from keras import backend as K
 from keras.models import Model
@@ -43,8 +46,11 @@ def num_to_label(num):
     return ret
 
 
-def get_model():
-    model_final, model = load_trained_model('modelHTR_augmented_79epochs.h5')
+def get_model(model_name, architecture_json):
+    # print('TensorFlow version:', tf.__version__)
+    # print('Keras version:', keras.__version__)
+    # print('cv2 version:', cv2.__version__)
+    model_final, model = load_trained_model(model_name, architecture_json)
     # the loss calculation occurs elsewhere, so we use a dummy lambda function for the loss
     model_final.compile(loss={'ctc': lambda y_true, y_pred: y_pred},
                         optimizer=Adam(lr = 0.0001))
@@ -54,8 +60,8 @@ def get_model():
 
 # LOAD MODEL
 
-def load_trained_model(model_path):
-    with open('./CRNN_architecture.json') as f:
+def load_trained_model(model_path, architecture_json):
+    with open(architecture_json) as f:
         json_string = f.read()
     ctc = keras.models.model_from_json(json_string)
     ctc.load_weights(model_path)
@@ -90,11 +96,14 @@ def resize_to_fit_dim(img, height=64, width=256):
 	return resized
 
 def preprocess(img):
-	resized = resize_to_fit_dim(img, 64, 256)
-	x, y = resized.shape
-	preprocessed = np.ones([64, 256])*255 # blank white image
-	preprocessed[:x, :y] = resized
-	return cv2.rotate(preprocessed, cv2.ROTATE_90_CLOCKWISE)/255.
+    resized = resize_to_fit_dim(img, 64, 256)
+    x, y = resized.shape
+    preprocessed = np.ones([64, 256])*255 # blank white image
+    start_x = int((64 - x)/2)
+    start_y = int((256 - y)/2)
+    preprocessed[start_x:start_x+x, start_y:start_y+y] = resized
+    cv2.imwrite('./img_debug/11_words_preprocessed'+str((random.random()*4500)%128)+'.jpg', preprocessed)
+    return cv2.rotate(preprocessed, cv2.ROTATE_90_CLOCKWISE)/255.
 
 
 
@@ -104,8 +113,9 @@ def predict_words(words, model):
     batch = []
     for img in words:
         batch.append(preprocess(img))
+    if (len(batch) == 0):
+        return ''
     batch = np.array(batch).reshape(-1, 256, 64, 1)
-
     pred = model.predict(batch)
     decoded = K.get_value(K.ctc_decode(pred, input_length=np.ones(pred.shape[0])*pred.shape[1], greedy=True)[0][0])
     res = list(map(lambda x: num_to_label(x), decoded))

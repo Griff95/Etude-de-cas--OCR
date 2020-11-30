@@ -1,5 +1,5 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="dark">
     <ion-title>
       Which one should I read?
     </ion-title>
@@ -21,8 +21,8 @@
     </ion-row>
   </ion-grid>
 
-  <ion-fab vertical="bottom" horizontal="center" slot="fixed">
-    <ion-fab-button (click)="photoService.addNewToGallery()">
+  <ion-fab vertical="bottom" horizontal="center" slot="fixed" >
+    <ion-fab-button (click)="photoService.addNewToGallery()" color="dark">
       <ion-icon name="camera"></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -30,7 +30,7 @@
 
 
   <ion-fab vertical="bottom" horizontal="start" slot="fixed">
-    <ion-fab-button expand="full">
+    <ion-fab-button expand="full" color="dark">
       <label for="file-input" style="font-size: 20pt; padding: 30px">
         +       
       </label>

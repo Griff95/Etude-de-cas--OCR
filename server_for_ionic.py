@@ -115,7 +115,7 @@ def post_img():
 @app.route('/test_get', methods=['GET'])
 @cross_origin()
 def show():
-    response = {'img': 'bravo, tu as get'}
+    response = {'txt_read': "bravo, l'API marche"}
     response_pickled = jsonpickle.encode(response)
 
     return Response(response=response_pickled, status=200, mimetype="application/json")
@@ -123,4 +123,3 @@ def show():
 if __name__ == "__main__":
     # start flask app
     app.run(host="0.0.0.0", port=5000, debug=True)
-    

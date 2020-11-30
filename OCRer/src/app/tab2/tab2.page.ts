@@ -19,16 +19,20 @@ export class Tab2Page {
 
     ocr(foto:string) {
       this.http.post('http://127.0.0.1:5000/post',{data: foto})
-          .subscribe((data) => {
-          if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
-            this.presentAlert("...nothing yet");
-          }else{
-          //this.presentAlert(data['txt_read'].replace('[^a]',"ZZZZZ").replace(/[^\na-z ]/gi, ''))
-          console.log(data['txt_read']);
-          this.presentAlert(data['txt_read'].replace(/[^\na-z ]/gi, '').replace(/\n/gi,"<br/>"));
+          .subscribe(
+            (data) => {
+              if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
+                this.presentAlert("...nothing yet");
+              }else{
+              //this.presentAlert(data['txt_read'].replace('[^a]',"ZZZZZ").replace(/[^\na-z ]/gi, ''))
+              console.log(data['txt_read']);
+              this.presentAlert(data['txt_read'].replace(/[^\na-z ]/gi, '').replace(/\n/gi,"<br/>"));
+              }
+            },
+      (error) =>{
+        this.presentAlert("...I couldn't connect to the server")
         }
-        });
-    }
+        )};
     
     testget() {
       this.http.get('http://127.0.0.1:5000/test_get')

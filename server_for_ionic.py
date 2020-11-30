@@ -58,10 +58,10 @@ def post_img():
 
 
     # convert to openCV image
-    # image_64 = io.BytesIO(base64.b64decode(imtxt))
-    # print(type(image_64))
-    # test = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
-    document = cv2.imread('./CAP2.jpg', cv2.IMREAD_COLOR)
+    image_64 = io.BytesIO(base64.b64decode(imtxt))
+    print(type(image_64))
+    document = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
+    # document = cv2.imread('./CAP2.jpg', cv2.IMREAD_COLOR)
     save_img_step = True
     # get document scan (binary, transformed)
     scan = scanner.get_scan(document, save_img_step)

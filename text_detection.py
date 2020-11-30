@@ -4,7 +4,7 @@ import random
 
 
 def get_contour_precedence(contour, cols):
-    tolerance_factor = 50
+    tolerance_factor = 75
     origin = cv2.boundingRect(contour)
     return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
 
@@ -44,7 +44,7 @@ def get_text_regions(scan, save=False):
 
 def get_lines(text_region, i, save=False):
     ret, bin_inv = cv2.threshold(text_region, 180, 255, cv2.THRESH_BINARY_INV)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (27,1))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21,1))
     dilated = cv2.dilate(bin_inv, kernel, iterations=5)
     if save:
         cv2.imwrite('./img_debug/7_TR_dilated_text_regions'+str(i)+'.jpg', dilated)

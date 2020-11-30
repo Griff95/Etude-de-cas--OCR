@@ -32,9 +32,9 @@ def num_to_label(num):
 
 
 def get_model(model_name, architecture_json):
-    # print('TensorFlow version:', tf.__version__)
-    # print('Keras version:', keras.__version__)
-    # print('cv2 version:', cv2.__version__)
+    print('TensorFlow version:', tf.__version__)
+    print('Keras version:', keras.__version__)
+    print('cv2 version:', cv2.__version__)
     model_final, model = load_trained_model(model_name, architecture_json)
     # the loss calculation occurs elsewhere, so we use a dummy lambda function for the loss
     model_final.compile(loss={'ctc': lambda y_true, y_pred: y_pred},

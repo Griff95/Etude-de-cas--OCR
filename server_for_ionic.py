@@ -6,10 +6,12 @@ from glob2 import glob
 import os
 import pytesseract
 from flask_cors import CORS, cross_origin
+from flask_restful import Resource, Api
 import base64
 from PIL import Image
 import io
 import json
+from flask import jsonify
 
 
 pytesseract.pytesseract.tesseract_cmd = r'H:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -18,6 +20,7 @@ pytesseract.pytesseract.tesseract_cmd = r'H:\\Program Files\\Tesseract-OCR\\tess
 # Initialize the Flask application
 app = Flask(__name__)
 cors = CORS(app)
+api = Api(app)
 
 img_list=[]
 
@@ -55,7 +58,7 @@ def post_img():
 
         print("ERROR, no file received")
         
-        response={'msg':"you're in the except"}
+        response={'txt_read':"you're in the except"}
 
     response_pickled = jsonpickle.encode(response)
 
@@ -66,10 +69,19 @@ def post_img():
 @app.route('/test_get', methods=['GET'])
 def show():
 
-    response = {'img': 'bravo, tu as get'}
+    response = {'txt_read': "bravo, l'API marche"}
     response_pickled = jsonpickle.encode(response)
 
     return Response(response=response_pickled, status=200, mimetype="application/json")
 
+class Morning(Resource):
+    def get(self):
+        
+        result= {'txt_read': "yo"}
+        return jsonify(result)
+
+
+api.add_resource(Morning, '/morning')
+
 # start flask app
-app.run(host="0.0.0.0", port=5000)
+app.run(port=5000)

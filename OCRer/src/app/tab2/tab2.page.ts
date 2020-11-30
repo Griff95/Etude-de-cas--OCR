@@ -4,7 +4,6 @@ import { Photo, PhotoService } from '../services/photo.service';
 import {AlertController} from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
 
-
 @Component({
   selector: 'app-tab2',
   templateUrl: 'tab2.page.html',
@@ -63,7 +62,7 @@ export class Tab2Page {
       buttons: [{
         text: 'OCR This!',
         role: 'destructive',
-        icon: 'triangle',
+        icon: "scan-circle-outline",
         handler: () => {
           this.ocr(photo.webviewPath);
         }

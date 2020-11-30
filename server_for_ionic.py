@@ -34,37 +34,10 @@ img_list=[]
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 
-
-#cv2.imshow('hi',img_list[0])
-
-
-# route http posts to this method
-@app.route('/post', methods=['POST'])
-@cross_origin()
-def post_img():
-    r = request
-
-    # cleaning debug image folder
-    for f in glob.glob('./img_debug/*.jpg'):
-        os.remove(f)
-    # convert string of image data to uint8
-    #print(r.json['data'])
-    try:
-        imtxt=r.json['data'].split(',')[1]
-        print('ok')
-    except:
-        imtxt=r.json['data']
-        print("couldn't split")
-
-
-    # convert to openCV image
-    image_64 = io.BytesIO(base64.b64decode(imtxt))
-    print(type(image_64))
-    document = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
-    # document = cv2.imread('./CAP2.jpg', cv2.IMREAD_COLOR)
+def processDocument(doc, model):
     save_img_step = True
     # get document scan (binary, transformed)
-    scan = scanner.get_scan(document, save_img_step)
+    scan = scanner.get_scan(doc, save_img_step)
     if scan is None:
         return Response(response=jsonpickle.encode({"txt_read":"aucun document détecté"}), status=200, mimetype="application/json")
     # get spatialy sorted list of paragraph images
@@ -85,11 +58,7 @@ def post_img():
             lines.append(text_detection.get_words(text_lines[i][l], i, l, save_img_step))
         text_words.append(lines)
 
-    # "modelHTR_augmented_79epochs.h5", "CRNN_architecture.json" --> manuscrit, train on hand_words_1
-    # "f11.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
-    # "model10.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
-    # "model5_11.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
-    model = prediction.get_model("f11.h5", "CRNN_architecture_capitale.json")
+
     predictions = []
     for i, tr in enumerate(text_words):
         pred_lines = []
@@ -105,10 +74,57 @@ def post_img():
     print('number of text lines:', *list(len(i) for i in text_words))
     print()
     print(predictions)
+    return predictions
+#cv2.imshow('hi',img_list[0])
 
-    # print(pytesseract.image_to_string(test))
-    # response={'txt_read':pytesseract.image_to_string(test)}
-    return Response(response=jsonpickle.encode({'txt_read':predictions}), status=200, mimetype="application/json")
+
+# route http posts to this method
+@app.route('/post_maj', methods=['POST'])
+@cross_origin()
+def post_img_maj():
+    print('request to predicet upper case text')
+    r = request
+    # cleaning debug image folder
+    for f in glob.glob('./img_debug/*.jpg'):
+        os.remove(f)
+    # convert string of image data to uint8
+    try:
+        imtxt=r.json['data'].split(',')[1]
+        print('ok')
+    except:
+        imtxt=r.json['data']
+        print("couldn't split")
+    # convert to openCV image
+    image_64 = io.BytesIO(base64.b64decode(imtxt))
+    document = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
+    model = prediction.get_model("f11.h5", "CRNN_architecture_capitale.json")
+    text_read = processDocument(document, model)
+    return Response(response=jsonpickle.encode({'txt_read':text_read}), status=200, mimetype="application/json")
+
+
+@app.route('/post_min', methods=['POST'])
+@cross_origin()
+def post_img_min():
+    print('request to predicet lower case text')
+    r = request
+    # cleaning debug image folder
+    for f in glob.glob('./img_debug/*.jpg'):
+        os.remove(f)
+    # convert string of image data to uint8
+    try:
+        imtxt=r.json['data'].split(',')[1]
+        print('ok')
+    except:
+        imtxt=r.json['data']
+        print("couldn't split")
+    # convert to openCV image
+    image_64 = io.BytesIO(base64.b64decode(imtxt))
+    document = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
+    model = prediction.get_model("htr6.h5", "CRNN_architecture.json")
+    text_read = processDocument(document, model)
+
+    return Response(response=jsonpickle.encode({'txt_read':text_read}), status=200, mimetype="application/json")
+
 
 # route http posts to this method
 

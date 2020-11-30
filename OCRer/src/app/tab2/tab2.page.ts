@@ -11,8 +11,8 @@ import { HttpClient } from '@angular/common/http';
 })
 export class Tab2Page {
 
-  constructor(public photoService: PhotoService, 
-    public actionSheetController: ActionSheetController, 
+  constructor(public photoService: PhotoService,
+    public actionSheetController: ActionSheetController,
     public alertController: AlertController,
     private http: HttpClient) {}
 
@@ -33,7 +33,7 @@ export class Tab2Page {
         this.presentAlert("...I couldn't connect to the server")
         }
         )};
-      
+
       ocrMin(foto:string) {
         this.http.post('http://127.0.0.1:5000/post_min',{data: foto})
             .subscribe(
@@ -50,45 +50,45 @@ export class Tab2Page {
           this.presentAlert("...I couldn't connect to the server")
           }
           )};
-    
+
     testget() {
       this.http.get('http://127.0.0.1:5000/test_get')
           .subscribe((data) => {
           this.presentAlert(data['txt_read']);
         });
     }
-    
 
-     
+
+
 
   async ngOnInit() {
     await this.photoService.loadSaved();
   }
 
   async presentAlert(OCRresult: string) {
-    
+
     const alert = await this.alertController.create({
       header: 'I read...',
       subHeader: '',
       message: OCRresult,
       buttons: ['OK'],
     });
-  
+
     await alert.present();
   }
 
   public async showActionSheet(photo: Photo, position: number) {
     const actionSheet = await this.actionSheetController.create({
-      
+
       buttons: [{
-        text: 'OCR This! 1',
+        text: 'OCR This! (upper case)',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {
           this.ocrMaj(photo.webviewPath);
         }
       },{
-        text: 'OCR This! 2',
+        text: 'OCR This! (lower case)',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {

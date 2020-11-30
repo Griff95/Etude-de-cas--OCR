@@ -16,24 +16,9 @@ from keras.layers import Input, Conv2D, MaxPooling2D, Reshape, Bidirectional, LS
 from keras.optimizers import Adam
 
 
-
-
-
-def label_to_num(label):
-
-    alphabets = u"abcedfghijklmnopqrstuvwxyz-' !()"
-    max_str_len = 24 # max length of input labels
-    num_of_characters = len(alphabets) + 1 # +1 for ctc pseudo blank
-    num_of_timestamps = 64 # max length of predicted labels
-    label_num = []
-    for ch in label:
-        label_num.append(alphabets.find(ch))
-
-    return np.array(label_num)
-
 def num_to_label(num):
 
-    alphabets = u"abcedfghijklmnopqrstuvwxyz-' !()"
+    alphabets = u"abcdefghijklmnopqrstuvwxyz-' !()"
     max_str_len = 24 # max length of input labels
     num_of_characters = len(alphabets) + 1 # +1 for ctc pseudo blank
     num_of_timestamps = 64 # max length of predicted labels
@@ -95,24 +80,24 @@ def resize_to_fit_dim(img, height=64, width=256):
 	resized = cv2.resize(img, dim)
 	return resized
 
-def preprocess(img):
+def preprocess(img, tr, l, w):
     resized = resize_to_fit_dim(img, 64, 256)
     x, y = resized.shape
     preprocessed = np.ones([64, 256])*255 # blank white image
     start_x = int((64 - x)/2)
     start_y = int((256 - y)/2)
     preprocessed[start_x:start_x+x, start_y:start_y+y] = resized
-    cv2.imwrite('./img_debug/11_words_preprocessed'+str((random.random()*4500)%128)+'.jpg', preprocessed)
+    cv2.imwrite('./img_debug/11_words_preprocessed'+str(tr)+'_'+str(l)+'_'+str(w)+'.jpg', preprocessed)
     return cv2.rotate(preprocessed, cv2.ROTATE_90_CLOCKWISE)/255.
 
 
 
 # prediction
 
-def predict_words(words, model):
+def predict_words(words, model, tr, l):
     batch = []
-    for img in words:
-        batch.append(preprocess(img))
+    for w,img in enumerate(words):
+        batch.append(preprocess(img, tr, l, w))
     if (len(batch) == 0):
         return ''
     batch = np.array(batch).reshape(-1, 256, 64, 1)

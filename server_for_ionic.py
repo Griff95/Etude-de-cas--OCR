@@ -61,7 +61,7 @@ def post_img():
     # image_64 = io.BytesIO(base64.b64decode(imtxt))
     # print(type(image_64))
     # test = cv2.imdecode(np.fromstring(image_64.read(), np.uint8), 1)
-    document = cv2.imread('./daniel1.jpg', cv2.IMREAD_COLOR)
+    document = cv2.imread('./CAP2.jpg', cv2.IMREAD_COLOR)
     save_img_step = True
     # get document scan (binary, transformed)
     scan = scanner.get_scan(document, save_img_step)
@@ -72,13 +72,32 @@ def post_img():
     if text_regions == []:
         return Response(response=jsonpickle.encode({"txt_read":"aucune région de texte détectée"}), status=200, mimetype="application/json")
     print("text_regions :" +str(len(text_regions)))
-    text_lines = list(map(lambda x: text_detection.get_lines(x, save_img_step), text_regions))
-    text_words = list(map(lambda x: list(map(lambda y: text_detection.get_words(y, save_img_step), x)), text_lines))
-    # modelHTR_augmented_79epochs.h5
-    # model10.h5
-    # model5_11.h5
-    model = prediction.get_model("modelHTR_augmented_79epochs.h5", "CRNN_architecture.json")
-    predictions = list(map(lambda paragraph: list(map(lambda line: " ".join(prediction.predict_words(line, model)), paragraph)), text_words))
+
+    text_lines = []
+    for i in range(len(text_regions)):
+        text_lines.append(text_detection.get_lines(text_regions[i], i, save_img_step))
+
+
+    text_words = []
+    for i in range(len(text_lines)):
+        lines = []
+        for l in range(len(text_lines[i])):
+            lines.append(text_detection.get_words(text_lines[i][l], i, l, save_img_step))
+        text_words.append(lines)
+
+    # "modelHTR_augmented_79epochs.h5", "CRNN_architecture.json" --> manuscrit, train on hand_words_1
+    # "f11.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
+    # "model10.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
+    # "model5_11.h5", "CRNN_architecture_capitale.json" --> captiale, trained on 300 000 data
+    model = prediction.get_model("f11.h5", "CRNN_architecture_capitale.json")
+    predictions = []
+    for i, tr in enumerate(text_words):
+        pred_lines = []
+        for l, line in enumerate(tr):
+            pred_lines.append(prediction.predict_words(line, model, i, l))
+        predictions.append(pred_lines)
+
+    predictions = list(map(lambda paragraph: list(map(lambda line: " ".join(line), paragraph)), predictions))
     predictions = list(map(lambda paragraph: "\n".join(paragraph), predictions))
     predictions = "\n\n".join(predictions)
 

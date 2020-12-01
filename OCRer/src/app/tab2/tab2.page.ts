@@ -17,8 +17,11 @@ export class Tab2Page {
     private http: HttpClient) {}
 
 
+    
+    api_url="localhost";
+
     ocrMaj(foto:string) {
-      this.http.post('http://127.0.0.1:5000/post_maj',{data: foto})
+      this.http.post('http://'+this.api_url+':5000/post_maj',{data: foto})
           .subscribe(
             (data) => {
               if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
@@ -30,12 +33,12 @@ export class Tab2Page {
               }
             },
       (error) =>{
-        this.presentAlert("...I couldn't connect to the server")
+        this.presentAlert("...I couldn't connect to the server\n[Error: "+error)
         }
         )};
 
       ocrMin(foto:string) {
-        this.http.post('http://127.0.0.1:5000/post_min',{data: foto})
+        this.http.post('http://'+this.api_url+':5000/post_min',{data: foto})
             .subscribe(
               (data) => {
                 if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
@@ -47,12 +50,12 @@ export class Tab2Page {
                 }
               },
         (error) =>{
-          this.presentAlert("...I couldn't connect to the server")
+          this.presentAlert("...I couldn't connect to the server\n[Error: "+error)
           }
           )};
 
     testget() {
-      this.http.get('http://127.0.0.1:5000/test_get')
+      this.http.get('http://'+this.api_url+':5000/test_get')
           .subscribe((data) => {
           this.presentAlert(data['txt_read']);
         });
@@ -77,18 +80,50 @@ export class Tab2Page {
     await alert.present();
   }
 
+
+
+  async showPrompt() {
+    let prompt = await this.alertController.create({
+      header: 'Settings',
+      message: "Choose API Url",
+      inputs: [
+        {
+          name: 'url',
+          placeholder: this.api_url,
+        }
+      ],
+      buttons: [
+        {
+          text: 'Default',
+          handler: data => {
+            this.api_url = 'localhost';
+            console.log('Cancel clicked');
+          }
+        },{
+          text: 'Save',
+          handler: data => {
+            console.log('Saved clicked');
+            this.api_url = data.url;
+          }
+        }
+      ]
+    });
+     await prompt.present();
+
+  }
+
   public async showActionSheet(photo: Photo, position: number) {
     const actionSheet = await this.actionSheetController.create({
 
       buttons: [{
-        text: 'OCR This! (upper case)',
+        text: 'OCR This! 1',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {
           this.ocrMaj(photo.webviewPath);
         }
       },{
-        text: 'OCR This! (lower case)',
+        text: 'OCR This! 2',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {

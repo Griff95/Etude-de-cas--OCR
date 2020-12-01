@@ -27,7 +27,11 @@
     </ion-fab-button>
   </ion-fab>
   
-
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" >
+    <ion-fab-button color="dark" (click)="this.showPrompt()">
+      <ion-icon name="settings"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 
   <ion-fab vertical="bottom" horizontal="start" slot="fixed">
     <ion-fab-button expand="full" color="dark">

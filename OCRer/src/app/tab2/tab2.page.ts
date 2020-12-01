@@ -18,10 +18,10 @@ export class Tab2Page {
 
 
     
-    api_url="localhost";
+    api_url="localhost:5000";
 
     ocrMaj(foto:string) {
-      this.http.post('http://'+this.api_url+':5000/post_maj',{data: foto})
+      this.http.post('http://'+this.api_url+'/post_maj',{data: foto})
           .subscribe(
             (data) => {
               if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
@@ -38,7 +38,7 @@ export class Tab2Page {
         )};
 
       ocrMin(foto:string) {
-        this.http.post('http://'+this.api_url+':5000/post_min',{data: foto})
+        this.http.post('http://'+this.api_url+'/post_min',{data: foto})
             .subscribe(
               (data) => {
                 if (!data['txt_read'].replace(/[^0-9a-z]/gi, '')) {
@@ -55,7 +55,7 @@ export class Tab2Page {
           )};
 
     testget() {
-      this.http.get('http://'+this.api_url+':5000/test_get')
+      this.http.get('http://'+this.api_url+'/test_get')
           .subscribe((data) => {
           this.presentAlert(data['txt_read']);
         });
@@ -96,7 +96,7 @@ export class Tab2Page {
         {
           text: 'Default',
           handler: data => {
-            this.api_url = 'localhost';
+            this.api_url = 'localhost:5000';
             console.log('Cancel clicked');
           }
         },{
@@ -116,14 +116,14 @@ export class Tab2Page {
     const actionSheet = await this.actionSheetController.create({
 
       buttons: [{
-        text: 'OCR This! 1',
+        text: 'OCR This! (uppercase)',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {
           this.ocrMaj(photo.webviewPath);
         }
       },{
-        text: 'OCR This! 2',
+        text: 'OCR This! (lowercase)',
         role: 'destructive',
         icon: "scan-circle-outline",
         handler: () => {

@@ -15,6 +15,7 @@ import json
 import matplotlib.pyplot as plt
 
 import urllib.request as req_url
+from IPython import get_ipython
 
 # home made modules
 import scanner
@@ -27,7 +28,9 @@ import prediction
 
 # Initialize the Flask application
 app = Flask(__name__)
+run_with_ngrok(app)
 cors = CORS(app)
+
 
 img_list=[]
 
@@ -138,4 +141,4 @@ def show():
 
 if __name__ == "__main__":
     # start flask app
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run()
